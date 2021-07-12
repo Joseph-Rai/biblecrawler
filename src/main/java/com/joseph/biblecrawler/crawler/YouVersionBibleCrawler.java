@@ -120,6 +120,10 @@ public class YouVersionBibleCrawler implements Crawler {
                 }
             } else {
                 builder.append(verse.getElementsByClass("content").text() + " ");
+                if (countFlag == verses.size()) {
+                    pickedVerse.setContent(builder.toString().trim());
+                    verseList.add(pickedVerse);
+                }
             }
             oldClassName = verse.className();
         }

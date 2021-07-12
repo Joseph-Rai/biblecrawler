@@ -15,6 +15,7 @@ import com.joseph.biblecrawler.util.TMXCreator;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -193,63 +194,64 @@ public class MainFxController {
             return;
         }
 
-        Stage dialog = null;
+        File sourceFile = new File(txtSourceBible.getText());
+        File targetFile = new File(txtTargetBible.getText());
+
+        if (!sourceFile.isFile() || !targetFile.isFile()) {
+            return;
+        }
+
+        String title = "Setting for Path file saved";
+        String header = "Please choose the path file will be saved.";
+        String msg = "Click the OK button and select a path.";
+        showMsgbox(title,header,msg, Alert.AlertType.INFORMATION);
+
+        Popup dialog = null;
         try {
-            dialog = getLoadingDialog();
+            dialog = showLoadingPopup();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        File sourceFile = new File(txtSourceBible.getText());
-        File targetFile = new File(txtTargetBible.getText());
-        if (sourceFile.isFile() && targetFile.isFile()) {
-            try {
 
-                File dir = showDirectoryChooser("Set the path where the target file will be saved.",
-                        btnCreateTMX.getScene().getWindow(), DESKTOP_PATH);
-
-                if (dir == null) {
-                    return;
-                }
-
-                dialog.show();
-
-                importer.importFromExcel(sourceFile);
-                importer.importFromExcel(targetFile);
-
-                List<TMX> tmxList = tmxCreator.createTMX();
-
-                if (dir.isDirectory()) {
-                    String fileName = ExcelExporter.exportToTMX(tmxList, dir.getPath());
-                    String msg = "Complete to export tmx files.\n\n" +
-                            "File Name: " + fileName + "\n\n" +
-                            "Path: " + dir.getPath();
-
-                    String title = "Export File Succeed";
-                    String header = "Export to TMX Format Excel File Successfully";
-                    showMsgbox(title,header,msg, Alert.AlertType.INFORMATION);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                String title = "Export File Failed";
-                String header = "Failed to Export to TMX Format Excel File";
-                String msg = "Export to tmx format excel failed.\n" +
-                        "Check if the file path or excel Source is set correctly.";
-                showMsgbox(title,header,msg, Alert.AlertType.ERROR);
-            }
+        File dir = showDirectoryChooser("Set the path where the target file will be saved.",
+                btnCreateTMX.getScene().getWindow(), DESKTOP_PATH);
+        if (dir == null) {
+            return;
         }
-        dialog.close();
+
+        try {
+            importer.importFromExcel(sourceFile);
+            importer.importFromExcel(targetFile);
+
+            List<TMX> tmxList = tmxCreator.createTMX();
+
+            if (dir.isDirectory()) {
+                String fileName = ExcelExporter.exportToTMX(tmxList, dir.getPath());
+                msg = "Complete to export tmx files.\n\n" +
+                        "File Name: " + fileName + "\n\n" +
+                        "Path: " + dir.getPath();
+
+                title = "Export File Succeed";
+                header = "Export to TMX Format Excel File Successfully";
+                showMsgbox(title,header,msg, Alert.AlertType.INFORMATION);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            title = "Export File Failed";
+            header = "Failed to Export to TMX Format Excel File";
+            msg = "Export to tmx format excel failed.\n" +
+                    "Check if the file path or excel Source is set correctly.";
+            showMsgbox(title,header,msg, Alert.AlertType.ERROR);
+        }
+        dialog.hide();
     }
 
-    private Stage getLoadingDialog() throws IOException {
-        Stage dialog = new Stage(StageStyle.UTILITY);
-        dialog.initModality(Modality.NONE);
-        dialog.initOwner(btnCreateTMX.getScene().getWindow());
-        dialog.setTitle("Please wait...");
-        dialog.setResizable(false);
-        Parent parent = FXMLLoader.load(getClass().getResource("WaitFx.fxml"));
-        Scene scene = new Scene(parent);
-        dialog.setScene(scene);
-        return dialog;
+    private Popup showLoadingPopup() throws IOException {
+        Popup popup = new Popup();
+        Parent parent = FXMLLoader.load(getClass().getResource("Popup.fxml"));
+        popup.getContent().add(parent);
+        popup.show(btnCreateTMX.getScene().getWindow());
+        return popup;
     }
 
     @FXML
