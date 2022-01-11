@@ -14,10 +14,10 @@ import org.springframework.context.ConfigurableApplicationContext;
 public class JavaFxApplication extends Application {
 
     private ConfigurableApplicationContext applicationContext;
-    public static final String PROGRAM_VER = "Bible Crawler Ver 4.0";
+    public static final String PROGRAM_VER = "Bible Crawler Ver 4.2";
     public static final String PROGRAM_AUTHOR = "Joseph Rai";
     public static final String PROGRAM_COPYRIGHT = "World Mission Society Church of God";
-    public static final String PROGRAM_LAST_MODIFIED = "10 July 2021";
+    public static final String PROGRAM_LAST_MODIFIED = "11 Jan 2022";
 
     @Override
     public void init() {
