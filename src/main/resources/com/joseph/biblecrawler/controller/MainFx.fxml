@@ -33,13 +33,13 @@
       </MenuBar>
    </top>
    <center>
-      <TabPane prefWidth="200.0" styleClass="btn" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+      <TabPane prefHeight="225.0" prefWidth="600.0" styleClass="btn" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
         <tabs>
           <Tab fx:id="tabCreateExcelSource" styleClass="btn" text="Create Excel Source">
                <content>
                   <BorderPane prefWidth="200.0">
                      <center>
-                        <AnchorPane prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+                        <AnchorPane prefHeight="170.0" prefWidth="600.0" BorderPane.alignment="CENTER">
                            <children>
                               <Label fx:id="lblFolderPath" layoutX="24.0" layoutY="23.0" styleClass="lbl" text="Set Folder Path">
                                  <font>
@@ -53,7 +53,13 @@
                               </Label>
                               <TextField fx:id="txtFolderPath" layoutX="170.0" layoutY="24.0" prefHeight="22.0" prefWidth="363.0" />
                               <Button fx:id="btnSearchFolder" layoutX="539.0" layoutY="24.0" mnemonicParsing="false" onAction="#clickBtnSearchFolder" text="..." />
-                              <ComboBox fx:id="cboHtmlSourceURL" layoutX="170.0" layoutY="71.0" onMousePressed="#clickCboHtmlSourceURL" prefHeight="22.0" prefWidth="394.0" />
+                              <ComboBox fx:id="cboHtmlSourceURL" layoutX="170.0" layoutY="71.0" onMousePressed="#clickCboHtmlSourceURL" prefHeight="23.0" prefWidth="393.0" />
+                              <Label fx:id="lblHtmlSourceURL1" layoutX="117.0" layoutY="113.0" styleClass="lbl" text="URL">
+                                 <font>
+                                    <Font size="18.0" />
+                                 </font>
+                              </Label>
+                              <TextField fx:id="txtURL" layoutX="170.0" layoutY="113.0" prefHeight="23.0" prefWidth="393.0" />
                            </children>
                         </AnchorPane>
                      </center>
@@ -61,7 +67,8 @@
                         <HBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0" spacing="30.0" BorderPane.alignment="CENTER">
                            <children>
                               <Button fx:id="btnCreateTextTemplate" mnemonicParsing="false" onAction="#clickBtnCreateTextTemplate" styleClass="btn" text="1. Create Text Template" />
-                              <Button fx:id="btnCreateExcelSource" mnemonicParsing="false" onAction="#clickBtnCreateExcelSource" styleClass="btn" text="2. Create Excel Source" />
+                              <Button fx:id="btnRunAutoCrawling" mnemonicParsing="false" onAction="#clickBtnAutoCrawling" styleClass="btn" text="2. Run Auto Crawling" />
+                              <Button fx:id="btnCreateExcelSource" mnemonicParsing="false" onAction="#clickBtnCreateExcelSource" styleClass="btn" text="3. Create Excel Source" />
                            </children>
                            <padding>
                               <Insets bottom="10.0" />
@@ -91,6 +98,13 @@
                               <TextField fx:id="txtTargetBible" layoutX="139.0" layoutY="65.0" prefHeight="22.0" prefWidth="396.0" />
                               <Button fx:id="btnSearchSourceBible" layoutX="541.0" layoutY="23.0" mnemonicParsing="false" onAction="#clickBtnSearchSourceBible" text="..." />
                               <Button fx:id="btnSearchTargetBible" layoutX="541.0" layoutY="65.0" mnemonicParsing="false" onAction="#clickBtnSearchTargetBible" text="..." />
+                              <Label fx:id="lblHtmlSourceURL11" layoutX="32.0" layoutY="107.0" prefHeight="23.0" prefWidth="101.0" styleClass="lbl" text="Save Path">
+                                 <font>
+                                    <Font size="18.0" />
+                                 </font>
+                              </Label>
+                              <TextField fx:id="txtSearchSavePath" layoutX="140.0" layoutY="107.0" prefHeight="23.0" prefWidth="395.0" />
+                              <Button fx:id="btnSearchSavePath" layoutX="541.0" layoutY="107.0" mnemonicParsing="false" onAction="#clickBtnSearchSavePath" text="..." />
                            </children>
                         </AnchorPane>
                      </center>

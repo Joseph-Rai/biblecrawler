@@ -10,10 +10,13 @@ import javax.persistence.*;
 public class BibleIndex {
 
     @Id @GeneratedValue
+    @Column(name = "bible_index_id")
     private Long id;
     private String book;
-
-    @Column(name = "max_chapter")
     private int maxChapter;
+
+    @OneToOne
+    @JoinColumn(name = "book_name_id")
+    private BookName bookName;
 
 }

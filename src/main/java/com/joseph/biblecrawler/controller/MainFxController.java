@@ -1,12 +1,10 @@
 package com.joseph.biblecrawler.controller;
 
 import com.joseph.biblecrawler.JavaFxApplication;
-import com.joseph.biblecrawler.crawler.Crawler;
-import com.joseph.biblecrawler.crawler.HolyBibleCrawler;
-import com.joseph.biblecrawler.crawler.ResurseCrestineCrawler;
-import com.joseph.biblecrawler.crawler.YouVersionBibleCrawler;
+import com.joseph.biblecrawler.crawler.*;
 import com.joseph.biblecrawler.model.TMX;
 import com.joseph.biblecrawler.model.URL;
+import com.joseph.biblecrawler.repository.BibleIndexRepository;
 import com.joseph.biblecrawler.repository.UrlRepository;
 import com.joseph.biblecrawler.util.CreateTextFile;
 import com.joseph.biblecrawler.util.ExcelExporter;
@@ -77,20 +75,35 @@ public class MainFxController {
     @FXML
     private Button btnCreateTMX;
 
+    @FXML
+    private Button btnRunAutoCrawling;
+
+    @FXML
+    private TextField txtURL;
+
+    @FXML
+    private TextField txtSearchSavePath;
+
+    @FXML
+    private Button btnSearchSavePath;
+
     private ObservableList<String> observableUrlList = FXCollections.observableArrayList();
 
     private static final String DESKTOP_PATH = System.getProperty("user.home") + "\\Desktop";
 
-    private final UrlRepository uriRepository;
+    private final UrlRepository urlRepository;
+    public final BibleIndexRepository bibleIndexRepository;
     private final ExcelImporter importer;
     private final TMXCreator tmxCreator;
 
     @Autowired
-    public MainFxController(UrlRepository uriRepository, ExcelImporter importer, TMXCreator tmxCreator) {
+    public MainFxController(UrlRepository urlRepository, BibleIndexRepository bibleIndexRepository,
+                            ExcelImporter importer, TMXCreator tmxCreator) {
         this.importer = importer;
-        this.uriRepository = uriRepository;
+        this.urlRepository = urlRepository;
+        this.bibleIndexRepository = bibleIndexRepository;
         this.tmxCreator = tmxCreator;
-        List<URL> urls = uriRepository.findAll();
+        List<URL> urls = urlRepository.findAll();
         for (URL url : urls) {
             observableUrlList.add(url.toString());
         }
@@ -117,13 +130,7 @@ public class MainFxController {
     @FXML
     void clickBtnCreateExcelSource(ActionEvent event) {
 
-        if (txtFolderPath.getText().equals("") || cboHtmlSourceURL.getValue().equals("")) {
-            String title = "Error";
-            String header = "Error";
-            String msg = "No path or HTML source set.";
-            showMsgbox(title,header,msg, Alert.AlertType.ERROR);
-            return;
-        }
+        if (validateTabCreateExcelSource()) return;
 
         Crawler crawler = getCrawler();
         crawler.setFilePath(txtFolderPath.getText());
@@ -204,7 +211,7 @@ public class MainFxController {
         String title = "Setting for Path file saved";
         String header = "Please choose the path file will be saved.";
         String msg = "Click the OK button and select a path.";
-        showMsgbox(title,header,msg, Alert.AlertType.INFORMATION);
+//        showMsgbox(title,header,msg, Alert.AlertType.INFORMATION);
 
         Popup dialog = null;
         try {
@@ -285,15 +292,13 @@ public class MainFxController {
     @FXML
     void clickBtnSearchFolder(ActionEvent event) {
         String title = "Choose Folder for Parsing Task";
-        File targetDir;
-        if (txtFolderPath.getText().equals("")) {
-            targetDir = showDirectoryChooser(title, btnSearchFolder.getScene().getWindow(), DESKTOP_PATH);
-        } else {
-            targetDir = showDirectoryChooser(title, btnSearchFolder.getScene().getWindow(), txtFolderPath.getText());
-        }
-        Platform.runLater(() -> {
-            txtFolderPath.setText(targetDir.getPath());
-        });
+        getDirectoryFromChooser(txtFolderPath, title);
+    }
+
+    @FXML
+    void clickBtnSearchSavePath(ActionEvent event) {
+        String title = "Choose Folder that TMX file will be saved.";
+        getDirectoryFromChooser(txtSearchSavePath, title);
     }
 
     private File showDirectoryChooser(String title, Window ownerWindow, String path) {
@@ -313,30 +318,37 @@ public class MainFxController {
     @FXML
     void clickBtnSearchSourceBible(ActionEvent event) {
         String title = "Choose Excel Source Language File for Creating TMX";
-        File sourceFile;
-        if (txtSourceBible.getText().equals("")) {
-            sourceFile = showFileChooser(title, btnSearchSourceBible.getScene().getWindow(), DESKTOP_PATH);
-        } else {
-            String presentDir = new File(txtSourceBible.getText()).getParentFile().getPath();
-            sourceFile = showFileChooser(title, btnSearchSourceBible.getScene().getWindow(), presentDir);
-        }
-        Platform.runLater(() -> {
-            txtSourceBible.setText(sourceFile.getPath());
-        });
+        getFileFromChooser(txtSourceBible, title);
     }
 
     @FXML
     void clickBtnSearchTargetBible(ActionEvent event) {
         String title = "Choose Excel Target Language File for Creating TMX";
-        File targetFile;
-        if (txtTargetBible.getText().equals("")) {
-            targetFile = showFileChooser(title, btnSearchTargetBible.getScene().getWindow(), DESKTOP_PATH);
+        getFileFromChooser(txtTargetBible, title);
+    }
+
+    private void getFileFromChooser(TextField textField, String title) {
+        File file;
+        if (textField.getText().equals("")) {
+            file = showFileChooser(title, textField.getScene().getWindow(), DESKTOP_PATH);
         } else {
-            String presentDir = new File(txtTargetBible.getText()).getParentFile().getPath();
-            targetFile = showFileChooser(title, btnSearchTargetBible.getScene().getWindow(), presentDir);
+            String presentDir = new File(textField.getText()).getParentFile().getPath();
+            file = showFileChooser(title, textField.getScene().getWindow(), presentDir);
         }
         Platform.runLater(() -> {
-            txtTargetBible.setText(targetFile.getPath());
+            textField.setText(file.getPath());
+        });
+    }
+    private void getDirectoryFromChooser(TextField textField, String title) {
+        File file;
+        if (textField.getText().equals("")) {
+            file = showDirectoryChooser(title, textField.getScene().getWindow(), DESKTOP_PATH);
+        } else {
+            String presentDir = new File(textField.getText()).getParentFile().getPath();
+            file = showDirectoryChooser(title, textField.getScene().getWindow(), presentDir);
+        }
+        Platform.runLater(() -> {
+            textField.setText(file.getPath());
         });
     }
 
@@ -344,6 +356,60 @@ public class MainFxController {
     void clickCboHtmlSourceURL(MouseEvent event) {
         cboHtmlSourceURL.getItems().clear();
         cboHtmlSourceURL.getItems().addAll(observableUrlList);
+    }
+
+    @FXML
+    void clickBtnAutoCrawling(ActionEvent event) {
+
+        if (validateTabCreateExcelSource()) return;
+
+        if (txtURL.getText().equals("")) {
+            String title = "Error";
+            String header = "Error";
+            String msg = "No URL set.";
+            showMsgbox(title,header,msg, Alert.AlertType.ERROR);
+            return;
+        }
+
+        AutoCrawler autoCrawler = getAutoCrawler(bibleIndexRepository);
+        autoCrawler.getDefaultDriver();
+        autoCrawler.autoCrawling(txtFolderPath.getText(), txtURL.getText());
+        autoCrawler.closeWebDriver();
+
+    }
+    
+    private boolean validateTabCreateExcelSource() {
+        if (txtFolderPath.getText().equals("")) {
+            String title = "Error";
+            String header = "Error";
+            String msg = "No path set.";
+            showMsgbox(title,header,msg, Alert.AlertType.ERROR);
+            return true;
+        }
+        if (cboHtmlSourceURL.getValue().equals("")) {
+            String title = "Error";
+            String header = "Error";
+            String msg = "No HTML source set.";
+            showMsgbox(title,header,msg, Alert.AlertType.ERROR);
+            return true;
+        }
+        return false;
+    }
+
+    private AutoCrawler getAutoCrawler(BibleIndexRepository bibleIndexRepository) {
+        AutoCrawler autoCrawler;
+        switch (cboHtmlSourceURL.getSelectionModel().getSelectedIndex()) {
+            case 1:
+                autoCrawler = new HolyBibleAutoCrawler(bibleIndexRepository);
+                break;
+            case 2:
+                autoCrawler = new ResurseCrestineAutoCrawler(bibleIndexRepository);
+                break;
+            default:
+                autoCrawler = new YouVersionBibleAutoCrawler(bibleIndexRepository);
+                break;
+        }
+        return autoCrawler;
     }
 
 }
