@@ -85,6 +85,9 @@ public class TMXCreator {
             }
             tmxList.add(tmx);
         }
+
+        sourceVerseRepository.deleteAll();
+        targetVerseRepository.deleteAll();
         return tmxList;
     }
 
