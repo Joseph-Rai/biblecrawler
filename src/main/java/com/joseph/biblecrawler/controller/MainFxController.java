@@ -1,5 +1,6 @@
 package com.joseph.biblecrawler.controller;
 
+import com.google.common.util.concurrent.*;
 import com.joseph.biblecrawler.JavaFxApplication;
 import com.joseph.biblecrawler.crawler.*;
 import com.joseph.biblecrawler.model.TMX;
@@ -10,9 +11,11 @@ import com.joseph.biblecrawler.util.CreateTextFile;
 import com.joseph.biblecrawler.util.ExcelExporter;
 import com.joseph.biblecrawler.util.ExcelImporter;
 import com.joseph.biblecrawler.util.TMXCreator;
+import com.sun.javafx.tk.FileChooserType;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -24,13 +27,15 @@ import javafx.stage.FileChooser;
 import javafx.stage.Popup;
 import javafx.stage.Window;
 import net.rgielen.fxweaver.core.FxmlView;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.springframework.stereotype.Controller;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Controller
 @FxmlView("MainFx.fxml")
@@ -82,10 +87,12 @@ public class MainFxController {
     private TextField txtTargetURL;
 
     @FXML
-    private TextField txtSearchSavePath;
+    private TextField txtSavePath;
 
     @FXML
-    private Button btnSearchSavePath;
+    private Button btnSavePath;
+
+    Popup popup;
 
     private ObservableList<String> observableUrlList = FXCollections.observableArrayList();
 
@@ -96,7 +103,6 @@ public class MainFxController {
     private final ExcelImporter importer;
     private final TMXCreator tmxCreator;
 
-    @Autowired
     public MainFxController(UrlRepository urlRepository, BibleIndexRepository bibleIndexRepository,
                             ExcelImporter importer, TMXCreator tmxCreator) {
         this.importer = importer;
@@ -193,11 +199,11 @@ public class MainFxController {
 
     @FXML
     void clickBtnCreateTMX(ActionEvent event) {
+
         if (txtSourceBible.getText().equals("") || txtTargetBible.getText().equals("")) {
-            String title = "Error";
-            String header = "Error";
-            String msg = "No source or target set.";
-            showMsgbox(title,header,msg, Alert.AlertType.ERROR);
+            showMsgbox("Error","Error",
+                    "No source or target set.",
+                    Alert.AlertType.ERROR);
             return;
         }
 
@@ -208,54 +214,76 @@ public class MainFxController {
             return;
         }
 
-        String title = "Setting for Path file saved";
-        String header = "Please choose the path file will be saved.";
-        String msg = "Click the OK button and select a path.";
-//        showMsgbox(title,header,msg, Alert.AlertType.INFORMATION);
+        Platform.runLater(() -> {
+            popup = showLoadingPopup();
+            setUIDisable(true);
+        });
 
-        Popup dialog = null;
-        try {
-            dialog = showLoadingPopup();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        File file = new File(txtSavePath.getText());
+        Task<String> task = new Task<>() {
+            @Override
+            protected String call() throws Exception {
 
-        File dir = showDirectoryChooser("Set the path where the target file will be saved.",
-                btnCreateTMX.getScene().getWindow(), DESKTOP_PATH);
-        if (dir == null) {
-            return;
-        }
+                importer.importFromExcel(sourceFile);
+                importer.importFromExcel(targetFile);
 
-        try {
-            importer.importFromExcel(sourceFile);
-            importer.importFromExcel(targetFile);
+                List<TMX> tmxList = tmxCreator.createTMX();
+                return ExcelExporter.exportToTMX(tmxList, file.getPath());
 
-            List<TMX> tmxList = tmxCreator.createTMX();
-
-            if (dir.isDirectory()) {
-                String fileName = ExcelExporter.exportToTMX(tmxList, dir.getPath());
-                msg = "Complete to export tmx files.\n\n" +
-                        "File Name: " + fileName + "\n\n" +
-                        "Path: " + dir.getPath();
-
-                title = "Export File Succeed";
-                header = "Export to TMX Format Excel File Successfully";
-                showMsgbox(title,header,msg, Alert.AlertType.INFORMATION);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            title = "Export File Failed";
-            header = "Failed to Export to TMX Format Excel File";
-            msg = "Export to tmx format excel failed.\n" +
-                    "Check if the file path or excel Source is set correctly.";
-            showMsgbox(title,header,msg, Alert.AlertType.ERROR);
-        }
-        dialog.hide();
+        };
+
+        ExecutorService execService = Executors.newSingleThreadExecutor();
+        ListeningExecutorService lExecService = MoreExecutors.listeningDecorator(execService);
+        ListenableFuture<String> listenableFuture = (ListenableFuture<String>) lExecService.submit(task);
+        Futures.addCallback(listenableFuture, new FutureCallback<String>() {
+            @Override
+            public void onSuccess(@NullableDecl String fileName) {
+                Platform.runLater(() -> {
+                    setUIDisable(false);
+                    popup.hide();
+                    showMsgbox("Export File Succeed",
+                            "Export to TMX Format Excel File Successfully",
+                            "Complete to export tmx files.\n\n" +
+                                    "File Name: " + file.getName() + "\n\n" +
+                                    "Path: " + file.getParentFile().getPath(),
+                            Alert.AlertType.INFORMATION);
+                });
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+                Platform.runLater(() -> {
+                    setUIDisable(false);
+                    popup.hide();
+                    showMsgbox("Export File Failed",
+                            "Failed to Export to TMX Format Excel File",
+                            "Export to tmx format excel failed.\n" +
+                                    "Check if the file path or excel Source is set correctly.",
+                            Alert.AlertType.ERROR);
+                });
+            }
+        });
     }
 
-    private Popup showLoadingPopup() throws IOException {
+    private void setUIDisable(boolean disabled) {
+        btnCreateTMX.setDisable(disabled);
+        btnSavePath.setDisable(disabled);
+        btnSearchSourceBible.setDisable(disabled);
+        btnSearchTargetBible.setDisable(disabled);
+        txtSourceBible.setDisable(disabled);
+        txtTargetBible.setDisable(disabled);
+        txtSavePath.setDisable(disabled);
+    }
+
+    private Popup showLoadingPopup() {
         Popup popup = new Popup();
-        Parent parent = FXMLLoader.load(getClass().getResource("Popup.fxml"));
+        Parent parent = null;
+        try {
+            parent = FXMLLoader.load(getClass().getResource("Popup.fxml"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         popup.getContent().add(parent);
         popup.show(btnCreateTMX.getScene().getWindow());
         return popup;
@@ -296,9 +324,9 @@ public class MainFxController {
     }
 
     @FXML
-    void clickBtnSearchSavePath(ActionEvent event) {
-        String title = "Choose Folder that TMX file will be saved.";
-        getDirectoryFromChooser(txtSearchSavePath, title);
+    void clickBtnSavePath(ActionEvent event) {
+        String title = "Set the path and file name to save the TMX file(Excel).";
+        getFileFromChooser(txtSavePath, title, FileChooserType.SAVE);
     }
 
     private File showDirectoryChooser(String title, Window ownerWindow, String path) {
@@ -309,10 +337,21 @@ public class MainFxController {
     }
 
     private File showFileChooser(String title, Window ownerWindow, String path) {
+        return showFileChooser(title, ownerWindow, path, FileChooserType.OPEN);
+    }
+
+    private File showFileChooser(String title, Window ownerWindow, String path, FileChooserType type) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(title);
         chooser.setInitialDirectory(new File(path));
-        return chooser.showOpenDialog(ownerWindow);
+        if (type == FileChooserType.OPEN) {
+            return chooser.showOpenDialog(ownerWindow);
+        } else {
+            FileChooser.ExtensionFilter extensionFilter =
+                    new FileChooser.ExtensionFilter("EXCEL file", "*.xls");
+            chooser.getExtensionFilters().add(extensionFilter);
+            return chooser.showSaveDialog(ownerWindow);
+        }
     }
 
     @FXML
@@ -328,25 +367,44 @@ public class MainFxController {
     }
 
     private void getFileFromChooser(TextField textField, String title) {
-        File file;
+        getFileFromChooser(textField, title, FileChooserType.OPEN);
+    }
+
+    private String setFilePath(TextField textField) {
+        String filePath;
         if (textField.getText().equals("")) {
-            file = showFileChooser(title, textField.getScene().getWindow(), DESKTOP_PATH);
+            filePath = DESKTOP_PATH;
         } else {
             String presentDir = new File(textField.getText()).getParentFile().getPath();
-            file = showFileChooser(title, textField.getScene().getWindow(), presentDir);
+            filePath = presentDir;
         }
+        return filePath;
+    }
+
+    private void getFileFromChooser(TextField textField, String title, FileChooserType type) {
+        String filePath = setFilePath(textField);
+
+        File file = showFileChooser(title, textField.getScene().getWindow(), filePath, type);
+
         Platform.runLater(() -> {
-            textField.setText(file.getPath());
+            if (type == FileChooserType.OPEN) {
+                textField.setText(file.getPath());
+            } else {
+                int indexOfExtension = file.getName().lastIndexOf(".");
+                if (!file.getName().substring(indexOfExtension).contains("xls")) {
+                    textField.setText(file.getPath() + ".xls");
+                } else {
+                    textField.setText(file.getPath());
+                }
+            }
         });
     }
+
     private void getDirectoryFromChooser(TextField textField, String title) {
-        File file;
-        if (textField.getText().equals("")) {
-            file = showDirectoryChooser(title, textField.getScene().getWindow(), DESKTOP_PATH);
-        } else {
-            String presentDir = new File(textField.getText()).getParentFile().getPath();
-            file = showDirectoryChooser(title, textField.getScene().getWindow(), presentDir);
-        }
+        String filePath = setFilePath(textField);
+
+        File file = showDirectoryChooser(title, textField.getScene().getWindow(), filePath);
+
         Platform.runLater(() -> {
             textField.setText(file.getPath());
         });

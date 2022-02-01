@@ -6,7 +6,9 @@ import com.joseph.biblecrawler.repository.SourceVerseRepository;
 import com.joseph.biblecrawler.repository.TargetVerseRepository;
 import org.springframework.stereotype.Component;
 
-import javax.persistence.*;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -67,7 +69,7 @@ public class TMXCreator {
                 "FROM cte a\n" +
                 "LEFT JOIN bible_index b\n" +
                 "\tON a.book=b.book\n" +
-                "ORDER BY b.id ";
+                "ORDER BY b.bible_index_id ";
 
         Query nativeQuery = em.createNativeQuery(sql);
         List<Object[]> resultList = nativeQuery.getResultList();

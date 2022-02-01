@@ -8,6 +8,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -61,7 +62,7 @@ public abstract class AutoCrawler {
 
     public void saveHtmlSource(String filePath) {
         String html = driver.getPageSource();
-        byte[] bytes = html.getBytes();
+        byte[] bytes = html.getBytes(StandardCharsets.UTF_8);
 
         Path path = Paths.get(filePath);
         try {

@@ -92,8 +92,8 @@
                                     <Font size="18.0" />
                                  </font>
                               </Label>
-                              <TextField fx:id="txtSearchSavePath" layoutX="140.0" layoutY="107.0" prefHeight="23.0" prefWidth="395.0" />
-                              <Button fx:id="btnSearchSavePath" layoutX="541.0" layoutY="107.0" mnemonicParsing="false" onAction="#clickBtnSearchSavePath" text="..." />
+                              <TextField fx:id="txtSavePath" layoutX="140.0" layoutY="107.0" prefHeight="23.0" prefWidth="395.0" />
+                              <Button fx:id="btnSavePath" layoutX="541.0" layoutY="107.0" mnemonicParsing="false" onAction="#clickBtnSavePath" text="..." />
                            </children>
                         </AnchorPane>
                      </center>

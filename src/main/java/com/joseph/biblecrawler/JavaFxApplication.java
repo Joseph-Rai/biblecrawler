@@ -14,7 +14,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 public class JavaFxApplication extends Application {
 
     private ConfigurableApplicationContext applicationContext;
-    public static final String PROGRAM_VER = "Bible Crawler Ver 5.0.0";
+    public static final String PROGRAM_VER = "Bible Crawler Ver 5.1.0";
     public static final String PROGRAM_AUTHOR = "Joseph Rai";
     public static final String PROGRAM_COPYRIGHT = "World Mission Society Church of God";
     public static final String PROGRAM_LAST_MODIFIED = "02 Feb 2022";
