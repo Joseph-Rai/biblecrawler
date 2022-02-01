@@ -17,7 +17,7 @@ import java.util.List;
 public abstract class AutoCrawler {
 
     public static final String WEB_DRIVER_ID = "webdriver.chrome.driver"; //드라이버 ID
-    public static final String WEB_DRIVER_PATH = "src/main/resources/chromedriver.exe"; //드라이버 경로
+    public static final String WEB_DRIVER_PATH = "chromedriver.exe"; //드라이버 경로
 
     protected WebDriver driver;
     protected BibleIndexRepository bibleIndexRepository;
