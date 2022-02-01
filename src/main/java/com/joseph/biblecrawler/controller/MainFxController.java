@@ -373,7 +373,15 @@ public class MainFxController {
 
         AutoCrawler autoCrawler = getAutoCrawler(bibleIndexRepository);
         autoCrawler.getDefaultDriver();
-        autoCrawler.autoCrawling(txtFolderPath.getText(), txtTargetURL.getText());
+        try {
+            autoCrawler.autoCrawling(txtFolderPath.getText(), txtTargetURL.getText());
+        } catch (Exception e) {
+            String title = "Error";
+            String header = "Error";
+            String msg = e.getMessage();
+            showMsgbox(title,header,msg, Alert.AlertType.ERROR);
+            return;
+        }
         autoCrawler.closeWebDriver();
 
     }
