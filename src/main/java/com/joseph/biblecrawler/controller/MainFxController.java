@@ -452,7 +452,7 @@ public class MainFxController {
             showMsgbox(title,header,msg, Alert.AlertType.ERROR);
             return true;
         }
-        if (cboWebsite.getValue().equals("")) {
+        if (cboWebsite.getSelectionModel().getSelectedIndex() < 0) {
             String title = "Error";
             String header = "Error";
             String msg = "No HTML source set.";

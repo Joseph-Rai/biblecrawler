@@ -24,7 +24,7 @@ public class ExcelExporter {
     public static List<String> bibleOrder = Arrays.asList(arrayBible);
     public static List<String> bibleOrderEng = Arrays.asList(arrayBibleEng);
 
-    public static String exportToTMX(List<TMX> tmxList, String filePath) {
+    public static String exportToTMX(List<TMX> tmxList, String filePath) throws IOException {
         String fileName;
 
         Collections.sort(tmxList);
@@ -37,7 +37,7 @@ public class ExcelExporter {
         return fileName;
     }
 
-    public static String exportToExcel(List<Verse> verseList, String filePath) {
+    public static String exportToExcel(List<Verse> verseList, String filePath) throws IOException {
         String fileName;
 
         Collections.sort(verseList);
@@ -50,41 +50,47 @@ public class ExcelExporter {
         return fileName;
     }
 
-    private static String exportFile(Workbook workbook, String filePath) {
-        String fileName = null;
+    private static String exportFile(Workbook workbook, String filePath) throws IOException {
+        String fileName;
         File xlsFile = null;
-        try {
+
+        File file = new File(filePath);
+        if (file.isDirectory() && file.exists()) {
+            String savedDate = new SimpleDateFormat("yyyyMMdd").format(new Date());
+            fileName = filePath + File.separator + "exportedBible_" + savedDate + ".xls";
+            fileName = getSequencedFileName(fileName);
+        } else {
             fileName = getSequencedFileName(filePath);
-            xlsFile = new File(fileName);
-            if (!xlsFile.exists()) {
-                xlsFile.createNewFile();
-            }
-            FileOutputStream fileOut = new FileOutputStream(xlsFile,false);
-            workbook.write(fileOut);
-            fileOut.flush();
-            fileOut.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
+
+        xlsFile = new File(fileName);
+        if (xlsFile.isFile() && !xlsFile.exists()) {
+            xlsFile.createNewFile();
+        }
+
+        FileOutputStream fileOut = new FileOutputStream(xlsFile,false);
+        workbook.write(fileOut);
+        fileOut.flush();
+        fileOut.close();
+
         return xlsFile.getName();
     }
 
     private static String getSequencedFileName(String filePath) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-        Date now = new Date();
 
         File path = new File(filePath);
         File directory = path.getParentFile();
         String fileName = getFileName(path);
+        String fileNameWithoutExtension = fileName.replace(".xls","");
 
-        File[] filteredFileList = directory.listFiles((dir, name) -> name.contains(fileName));
+        File[] filteredFileList = directory.listFiles((dir, name) -> name.contains(fileNameWithoutExtension));
         int sequence = filteredFileList.length + 1;
         String result;
         if (sequence <= 1) {
             result = directory + File.separator + fileName;
         } else {
             int indexFileExtension = fileName.lastIndexOf(".");
-            result = directory + File.separator + fileName.substring(0, indexFileExtension - 1) + "(" + sequence + ")"
+            result = directory + File.separator + fileName.substring(0, indexFileExtension) + "(" + sequence + ")"
                     + fileName.substring(indexFileExtension);
         }
         return result;
