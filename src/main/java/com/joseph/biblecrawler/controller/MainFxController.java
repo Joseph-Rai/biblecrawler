@@ -49,7 +49,7 @@ public class MainFxController {
     private Button btnSearchFolder;
 
     @FXML
-    private ComboBox<String> cboHtmlSourceURL;
+    private ComboBox<String> cboWebsite;
 
     @FXML
     private Button btnCreateTextTemplate;
@@ -79,7 +79,7 @@ public class MainFxController {
     private Button btnRunAutoCrawling;
 
     @FXML
-    private TextField txtURL;
+    private TextField txtTargetURL;
 
     @FXML
     private TextField txtSearchSavePath;
@@ -176,7 +176,7 @@ public class MainFxController {
 
     private Crawler getCrawler() {
         Crawler crawler;
-        switch (cboHtmlSourceURL.getSelectionModel().getSelectedIndex()) {
+        switch (cboWebsite.getSelectionModel().getSelectedIndex()) {
             case 1:
                 crawler = new HolyBibleCrawler();
                 break;
@@ -354,8 +354,8 @@ public class MainFxController {
 
     @FXML
     void clickCboHtmlSourceURL(MouseEvent event) {
-        cboHtmlSourceURL.getItems().clear();
-        cboHtmlSourceURL.getItems().addAll(observableUrlList);
+        cboWebsite.getItems().clear();
+        cboWebsite.getItems().addAll(observableUrlList);
     }
 
     @FXML
@@ -363,7 +363,7 @@ public class MainFxController {
 
         if (validateTabCreateExcelSource()) return;
 
-        if (txtURL.getText().equals("")) {
+        if (txtTargetURL.getText().equals("")) {
             String title = "Error";
             String header = "Error";
             String msg = "No URL set.";
@@ -373,7 +373,7 @@ public class MainFxController {
 
         AutoCrawler autoCrawler = getAutoCrawler(bibleIndexRepository);
         autoCrawler.getDefaultDriver();
-        autoCrawler.autoCrawling(txtFolderPath.getText(), txtURL.getText());
+        autoCrawler.autoCrawling(txtFolderPath.getText(), txtTargetURL.getText());
         autoCrawler.closeWebDriver();
 
     }
@@ -386,7 +386,7 @@ public class MainFxController {
             showMsgbox(title,header,msg, Alert.AlertType.ERROR);
             return true;
         }
-        if (cboHtmlSourceURL.getValue().equals("")) {
+        if (cboWebsite.getValue().equals("")) {
             String title = "Error";
             String header = "Error";
             String msg = "No HTML source set.";
@@ -398,7 +398,7 @@ public class MainFxController {
 
     private AutoCrawler getAutoCrawler(BibleIndexRepository bibleIndexRepository) {
         AutoCrawler autoCrawler;
-        switch (cboHtmlSourceURL.getSelectionModel().getSelectedIndex()) {
+        switch (cboWebsite.getSelectionModel().getSelectedIndex()) {
             case 1:
                 autoCrawler = new HolyBibleAutoCrawler(bibleIndexRepository);
                 break;
