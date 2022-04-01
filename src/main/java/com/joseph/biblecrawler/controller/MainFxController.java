@@ -430,8 +430,8 @@ public class MainFxController {
         }
 
         AutoCrawler autoCrawler = getAutoCrawler(bibleIndexRepository);
-        autoCrawler.getDefaultDriver();
         try {
+            autoCrawler.getDefaultDriver();
             autoCrawler.autoCrawling(txtFolderPath.getText(), txtTargetURL.getText());
         } catch (Exception e) {
             String title = "Error";
