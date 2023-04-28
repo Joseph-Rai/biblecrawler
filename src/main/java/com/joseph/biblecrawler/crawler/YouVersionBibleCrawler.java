@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class YouVersionBibleCrawler extends Crawler {
@@ -15,78 +17,75 @@ public class YouVersionBibleCrawler extends Crawler {
     @Override
     protected List<Verse> getVerseList(Document html, String bookName, int chapter) {
         List<Verse> verseList = new ArrayList<>();
-        int verseNum;
-        Elements verses = getVerseElements(html.body().getElementsByClass("reader"));
-        String oldClassName = "";
-        int countFlag = 0;
-        StringBuilder builder = new StringBuilder();
-        Verse pickedVerse = null;
+        Elements verses = html.select("[data-usfm]:not([class^=ChapterContent_chapter])");
+        String prevDataUsfm = null;
         for (Element verse : verses) {
-            countFlag++;
-            if (!oldClassName.equals(verse.className())) {
-                if (countFlag != 1) {
-                    pickedVerse.setContent(builder.toString().trim());
-                    if (pickedVerse.getVerseNum() != 0) {
-                        verseList.add(pickedVerse);
-                    }
-                }
-                pickedVerse = new Verse();
-                builder.setLength(0);
-                pickedVerse.setBook(bookName);
-                pickedVerse.setChapter(chapter);
-
-                String verseNumArgument;
-                try {
-                    verseNumArgument = verse.getElementsByClass("label").get(0).text();
-                } catch (Exception e) {
-                    continue;
-                }
-                if (verseNumArgument.indexOf("-") != -1) {
-                    int indexDash = verseNumArgument.indexOf("-");
-                    verseNumArgument = verseNumArgument.substring(0, indexDash);
-                }
-                if (isInt(verseNumArgument)) {
-                    pickedVerse.setVerseNum(Integer.parseInt(verseNumArgument));
-                }
-                if (storedVerseList.size() != 0) {
-                    try {
-                        pickedVerse.setId(checkExist(pickedVerse).getId());
-                    } catch (NullPointerException e) {}
-                }
-                builder.append(verse.getElementsByClass("content").text() + " ");
-                if (countFlag == verses.size()) {
-                    pickedVerse.setContent(builder.toString().trim());
-                    if (pickedVerse.getVerseNum() != 0) {
-                        verseList.add(pickedVerse);
-                    }
-                }
-            } else {
-                builder.append(verse.getElementsByClass("content").text() + " ");
-                if (countFlag == verses.size()) {
-                    pickedVerse.setContent(builder.toString().trim());
-                    if (pickedVerse.getVerseNum() != 0) {
-                        verseList.add(pickedVerse);
-                    }
-                }
+            String curDataUsfm = verse.attr("data-usfm");
+            if (curDataUsfm.equals(prevDataUsfm)) {
+                String content = extractContent(verse);
+                Verse prevVerse = verseList.get(verseList.size() - 1);
+                prevVerse.setContent(prevVerse.getContent().concat(" ").concat(content));
+                continue;
             }
-            oldClassName = verse.className();
+            Verse pickedVerse = new Verse();
+            pickedVerse.setBook(bookName);
+            pickedVerse.setChapter(chapter);
+            Elements children = verse.select("[class*=ChapterContent_label]");
+            String strVerseNum;
+            if (children.size() > 0) {
+                strVerseNum = children.first().text();
+            } else {
+                continue;
+            }
+            int indexOfDash = strVerseNum.indexOf("-");
+            if (indexOfDash != -1) {
+                strVerseNum = strVerseNum.substring(0, indexOfDash);
+            }
+            strVerseNum = extractNumberFromString(strVerseNum);
+            pickedVerse.setVerseNum(Integer.parseInt(strVerseNum));
+
+            String content = extractContent(verse);
+            pickedVerse.setContent(content);
+
+            Verse existedVerse = checkExist(pickedVerse);
+            if (storedVerseList.size() != 0 && existedVerse != null) {
+                pickedVerse.setId(existedVerse.getId());
+            }
+
+            if (existedVerse != null && !pickedVerse.getContent().isBlank()) {
+                String existedContent = existedVerse.getContent();
+                existedVerse.getContent()
+                        .concat(" ")
+                        .concat(pickedVerse.getContent());
+            } else {
+                verseList.add(pickedVerse);
+            }
+            prevDataUsfm = verse.attr("data-usfm");
         }
+
         return verseList;
     }
 
-    private Elements getVerseElements(Elements elements) {
-        Elements result = elements.select("span.verse");
-        return result;
+    private String extractContent(Element verse) {
+        Elements contents = verse.select("[class*=ChapterContent_content]");
+        StringBuilder sb = new StringBuilder();
+        for (Element content : contents) {
+            if (!content.text().isBlank()) {
+                sb.append(content.text());
+            }
+        }
+        return sb.toString();
     }
 
-    private boolean isInt(String verseNum) {
-        boolean isInt = false;
-        try {
-            Integer.parseInt(verseNum);
-            isInt = true;
-        } catch (NumberFormatException e) {}
-        return isInt;
+    private String extractNumberFromString(String strVerseNum) {
+        Pattern pattern = Pattern.compile("[0-9]");
+        Matcher matcher = pattern.matcher(strVerseNum);
+        StringBuffer sb = new StringBuffer();
+
+        while (matcher.find()) {
+            sb.append(matcher.group());
+        }
+
+        return sb.toString();
     }
-
-
 }
