@@ -180,23 +180,6 @@ public class MainFxController {
         }
     }
 
-    private Crawler getCrawler() {
-        Crawler crawler;
-        switch (cboWebsite.getSelectionModel().getSelectedIndex()) {
-            case 1:
-                crawler = new HolyBibleCrawler();
-                break;
-            case 2:
-                crawler = new ResurseCrestineCrawler();
-                break;
-            case 0:
-            default:
-                crawler = new YouVersionBibleCrawler();
-                break;
-        }
-        return crawler;
-    }
-
     @FXML
     void clickBtnCreateTMX(ActionEvent event) {
 
@@ -471,11 +454,33 @@ public class MainFxController {
             case 2:
                 autoCrawler = new ResurseCrestineAutoCrawler(bibleIndexRepository);
                 break;
+            case 3:
+                autoCrawler = new Bible4UAutoCrawler(bibleIndexRepository);
+                break;
             default:
                 autoCrawler = new YouVersionBibleAutoCrawler(bibleIndexRepository);
                 break;
         }
         return autoCrawler;
+    }
+
+    private Crawler getCrawler() {
+        Crawler crawler;
+        switch (cboWebsite.getSelectionModel().getSelectedIndex()) {
+            case 1:
+                crawler = new HolyBibleCrawler();
+                break;
+            case 2:
+                crawler = new ResurseCrestineCrawler();
+                break;
+            case 3:
+                crawler = new Bible4UCrawler();
+                break;
+            default:
+                crawler = new YouVersionBibleCrawler();
+                break;
+        }
+        return crawler;
     }
 
 }

@@ -1,7 +1,8 @@
 INSERT INTO URL (name, domain)
 VALUES ('You Version Bible', 'www.bible.com'),
        ('Holy Bible', 'www.holybible.or.kr'),
-       ('Resurse Cristine', 'biblia.resursecristine.ro');
+       ('Resurse Cristine', 'biblia.resursecristine.ro'),
+       ('Bible4U', 'bible4u.pe.kr');
 
 INSERT INTO book_name (book_name_id, youversion, resursecrestine)
 VALUES (1, 'GEN', 'Geneza'),
