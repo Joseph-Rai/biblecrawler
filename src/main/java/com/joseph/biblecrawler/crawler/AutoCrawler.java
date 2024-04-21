@@ -2,6 +2,7 @@ package com.joseph.biblecrawler.crawler;
 
 import com.joseph.biblecrawler.model.BibleIndex;
 import com.joseph.biblecrawler.repository.BibleIndexRepository;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -16,10 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AutoCrawler {
-
-    public static final String WEB_DRIVER_ID = "webdriver.chrome.driver"; //드라이버 ID
-    public static final String WEB_DRIVER_PATH = "chromedriver.exe"; //드라이버 경로
-
     protected WebDriver driver;
     protected BibleIndexRepository bibleIndexRepository;
     protected List<BibleIndex> bibleIndexList;
@@ -31,15 +28,9 @@ public abstract class AutoCrawler {
     }
 
     public void getDefaultDriver() {
-        //드라이버 설정
-        try {
-            System.setProperty(WEB_DRIVER_ID, WEB_DRIVER_PATH);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         bibleIndexList = bibleIndexRepository.findAll();
 
+        WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         options.addArguments("window-size=1920,1080");
         driver = new ChromeDriver(options);
