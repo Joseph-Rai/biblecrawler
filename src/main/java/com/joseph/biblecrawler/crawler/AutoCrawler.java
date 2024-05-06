@@ -7,14 +7,18 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class AutoCrawler {
     protected WebDriver driver;
@@ -30,10 +34,51 @@ public abstract class AutoCrawler {
     public void getDefaultDriver() {
         bibleIndexList = bibleIndexRepository.findAll();
 
-        WebDriverManager.chromedriver().setup();
+        String version = getChromeVersion();
+        version = version.split("\\.")[0];
+
+        WebDriverManager.chromedriver().driverVersion(version).setup();
         ChromeOptions options = new ChromeOptions();
         options.addArguments("window-size=1920,1080");
         driver = new ChromeDriver(options);
+    }
+
+    public static String getChromeVersion() {
+        String os = System.getProperty("os.name").toLowerCase();
+        try {
+            // 명령어 실행
+            Process process;
+            if (os.contains("win")) {
+                // Windows 운영 체제에서 Chrome 버전 조회
+                process = Runtime.getRuntime().exec("reg query \"HKEY_CURRENT_USER\\Software\\Google\\Chrome\\BLBeacon\" /v version");
+            } else if (os.contains("nix") || os.contains("nux") || os.contains("aix")) {
+                // Linux 운영 체제에서 Chrome 버전 조회
+                process = Runtime.getRuntime().exec("dpkg -l | grep google-chrome-stable");
+            } else {
+                System.out.println("Unsupported operating system.");
+                return null;
+            }
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+            String line;
+            StringBuilder output = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+
+            // 정규식을 사용하여 버전 정보 추출
+            Pattern pattern = Pattern.compile("version\\s+REG_SZ\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+)");
+            Matcher matcher = pattern.matcher(output.toString());
+            if (matcher.find()) {
+                return matcher.group(1);
+            } else {
+                return null;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public void closeWebDriver() {

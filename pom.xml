@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.joseph</groupId>
     <artifactId>biblecrawler</artifactId>
-    <version>5.4.0</version>
+    <version>5.5.0</version>
     <name>Bible Crawler</name>
     <description>Demo project for Spring Boot</description>
     <properties>

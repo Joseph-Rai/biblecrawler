@@ -246,7 +246,7 @@ public class MainFxController {
                             Alert.AlertType.ERROR);
                 });
             }
-        });
+        }, null);
     }
 
     private void setUIDisable(boolean disabled) {
